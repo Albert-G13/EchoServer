@@ -38,7 +38,6 @@ public class Server {
 
     public void run(){
         try (ServerSocket server = new ServerSocket(port)){
-            //...
             try(Socket socket = server.accept()){
                 handle(socket);
             }
