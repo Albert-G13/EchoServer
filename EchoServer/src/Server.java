@@ -17,12 +17,12 @@ public class Server {
         commands.put("date", str -> "Сегодня " + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd")));
         commands.put("time", str -> "Сейчас " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         commands.put("reverse", str -> {
-            String[] parts = str.split(":", 2);
+            String[] parts = str.split(" ", 2);
             if (parts.length < 2) return  "Не указан текст";
             return new StringBuilder(parts[1].trim()).reverse().toString();
         });
         commands.put("upper", str -> {
-            String[] parts = str.split(":", 2);
+            String[] parts = str.split(" ", 2);
             if (parts.length < 2) return  "Не указан текст";
             return parts[1].trim().toUpperCase();
         });
@@ -61,10 +61,13 @@ public class Server {
             while (true){
                 String message = scanner.nextLine().trim();
                 System.out.printf("Got message: %s%n", message);
-                String reversed = reversed(message);
-                printWriter.write(reversed);
-                System.out.printf("Sent message: %s%n", reversed);
+
+                String response = commands.getOrDefault(
+                        message.split(" ")[0].toLowerCase(),
+                        str -> str).apply(message);
+                printWriter.write(response);
                 printWriter.write(System.lineSeparator());
+                System.out.printf("Sent message: %s%n", response);
                 printWriter.flush();
                 if (message.equalsIgnoreCase("bye")){
                     System.out.println("Bye-bye!");
