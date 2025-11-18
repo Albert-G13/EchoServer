@@ -16,6 +16,8 @@ public class Server {
 
     private final ExecutorService pool = Executors.newCachedThreadPool();
 
+    private final ArrayList<ClientHandler> clients = new ArrayList<>();
+
     Server(int port) {
         this.port = port;
 
@@ -41,7 +43,9 @@ public class Server {
         try (ServerSocket server = new ServerSocket(port)){
             while (!server.isClosed()){
                 Socket socket = server.accept();
-                pool.submit(new ClientHandler(socket, commands));
+                ClientHandler client = new ClientHandler(socket, commands, clients);
+                clients.add(client);
+                pool.submit(client);
             }
         }catch (IOException e){
             System.out.printf("Вероятнее всего порт %s занят.%n", port);
