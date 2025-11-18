@@ -5,13 +5,18 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
+
 
 public class Server {
     private final int port;
     private final Map<String, Function<String, String>> commands = new HashMap<>();
 
-    private Server(int port) {
+    private final ExecutorService pool = Executors.newCachedThreadPool();
+
+    Server(int port) {
         this.port = port;
 
         commands.put("date", str -> "Сегодня " + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd")));
@@ -32,49 +37,15 @@ public class Server {
         return  new Server(port);
     }
 
-    public String reversed(String str){
-        return new StringBuilder(str).reverse().toString();
-    }
-
     public void run(){
         try (ServerSocket server = new ServerSocket(port)){
-            try(Socket socket = server.accept()){
-                handle(socket);
+            while (!server.isClosed()){
+                Socket socket = server.accept();
+                pool.submit(new ClientHandler(socket, commands));
             }
         }catch (IOException e){
             System.out.printf("Вероятнее всего порт %s занят.%n", port);
             e.printStackTrace();
-        }
-    }
-
-    private void handle(Socket socket) throws IOException{
-        InputStream inputStream = socket.getInputStream();
-        InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-
-        OutputStream outputStream = socket.getOutputStream();
-
-        try (Scanner scanner = new Scanner(inputStreamReader)){
-
-            PrintWriter printWriter = new PrintWriter(outputStream);
-
-            while (true){
-                String message = scanner.nextLine().trim();
-                System.out.printf("Got message: %s%n", message);
-
-                String response = commands.getOrDefault(
-                        message.split(" ")[0].toLowerCase(),
-                        str -> str).apply(message);
-                printWriter.write(response);
-                printWriter.write(System.lineSeparator());
-                System.out.printf("Sent message: %s%n", response);
-                printWriter.flush();
-                if (message.equalsIgnoreCase("bye")){
-                    System.out.println("Bye-bye!");
-                    return;
-                }
-            }
-        }catch (NoSuchElementException e){
-            System.out.println("Client disconnected");
         }
     }
 }
