@@ -20,24 +20,24 @@ public class Client {
     public void run(){
         System.out.println("Напиши 'Bye', чтобы выйти");
 
-        try(Socket socket = new Socket(host, port)){
-            Scanner scanner = new Scanner(System.in);
+        try(Socket socket = new Socket(host, port);
+            Scanner scanner = new Scanner(System.in)){
 
-            OutputStream outputStream = socket.getOutputStream();
-            PrintWriter printWriter = new PrintWriter(outputStream);
+            Scanner reader = getReader(socket);
+            PrintWriter writer = getWriter(socket);
 
-            Scanner input  = new Scanner(socket.getInputStream());
-
-            try (scanner; printWriter){
+            String welcome = reader.nextLine();
+            System.out.println(welcome);
+            try (scanner; writer){
                 while (true){
                     String message = scanner.nextLine();
-                    printWriter.write(message);
-                    printWriter.write(System.lineSeparator());
-                    printWriter.flush();
+                    writer.write(message);
+                    writer.write(System.lineSeparator());
+                    writer.flush();
 
                     System.out.printf("Sent message: %s%n", message);
 
-                    message = input.nextLine();
+                    message = reader.nextLine();
                     System.out.printf("Got message: %s%n", message);
 
                     if (message.equalsIgnoreCase("Bye")){
@@ -51,5 +51,15 @@ public class Client {
             System.out.printf("Can't connect to server %s:%s %n", host, port);
             e.printStackTrace();
         }
+    }
+    private PrintWriter getWriter(Socket socket) throws IOException {
+        OutputStream outputStream = socket.getOutputStream();
+        return new PrintWriter(outputStream);
+    }
+
+    private Scanner getReader(Socket socket) throws IOException {
+        InputStream inputStream = socket.getInputStream();
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+        return new Scanner(inputStreamReader);
     }
 }
